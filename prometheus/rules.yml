@@ -1,0 +1,30 @@
+groups:
+ - name: exporters_down
+   rules:
+   - alert: InstanceDown
+     expr: up == 0
+     for: 1m
+     labels:
+       severity: warning
+     annotations:
+       summary: "Instance {{ $labels.instance }} down"
+
+ - name: ssh_down
+   rules:
+   - alert: SSHDown
+     expr: probe_success{job="blackbox:ssh"} == 0
+     for: 30s
+     labels:
+       severity: warning
+     annotations:
+       summary: "SSH on instance {{ $labels.instance }} down"
+
+ - name: http_down
+   rules:
+   - alert: HTTPDown
+     expr: up{job="blackbox:http"} == 0 or probe_success{job="blackbox:http"} == 0
+     for: 5m
+     labels:
+       severity: critical
+     annotations:
+       summary: "Instance {{ $labels.instance }} not accessible"
