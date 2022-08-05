@@ -4,22 +4,23 @@
 # Author: Abid Khan
 # Description: This script loops over list of servers provide in a text file and deploy node-exporter container.
 # Usage: 
-#   $0 <ssh_password>
+#   $0
 
-# Make sure don't leave the password here
-SSH_PASSWD="${1:-here}"
-
-# Loop through nodes file line by line, each line is ssh hostname
-while IFS= read -r node
+# Loop through nodes file line by line
+while IFS= read -r line
 do
-    [ "${node:0:1}" = "#" ] && continue
+    [ "${line:0:1}" = "#" ] && continue
+    
+    # Spilt the line and create an array
+    entry=(${line//,/ })
+
     if command -v sshpass &> /dev/null
     then
         echo .........................................
-        echo "Installing node-exporter on ${node//*@/}"
+        echo "Installing node-exporter on ${entry[0]}"
         echo '           `````````````' 
         echo
-        sshpass -p "${SSH_PASSWD}" ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no ${node//$'\r'/} /bin/bash <<EOF
+        sshpass -p "${entry[2]}" ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no ${entry[1]}@${entry[0]} /bin/bash <<EOF
         echo ...Pull image
         docker pull prom/node-exporter
 
@@ -39,6 +40,6 @@ do
         curl -s -o /dev/null -w "status code: %{http_code}" http://localhost:9100/metrics
 EOF
     else
-        echo "'sshpass' is not installed on ${node//*@/}"
+        echo "'sshpass' is not installed on ${entry[0]}"
     fi
 done < node_lists.txt
