@@ -16,28 +16,29 @@ do
 
     if command -v sshpass &> /dev/null
     then
-        echo .........................................
+        echo
+        echo "########################################"
         echo "Installing node-exporter on ${entry[0]}"
-        echo '           `````````````' 
         echo
         sshpass -p "${entry[2]}" ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no ${entry[1]}@${entry[0]} /bin/bash <<EOF
-        echo ...Pull image
+        echo ---- Pull image
         docker pull prom/node-exporter
 
         echo
-        echo '...Run container (if not running/created)'
+        echo '---- Run container (if not running/created)'
         docker start node-exporter || docker run --restart=unless-stopped -d --name node-exporter \
         --net="host" --pid="host" \
         -v "/:/host:ro,rslave"  \
         prom/node-exporter
 
         echo
-        echo ...Check container status
+        echo ---- Check container status
         docker ps --filter "name=node-exporter"
 
         echo
-        echo ...Check status of node-exporter metrics
+        echo ---- Check status of node-exporter metrics
         curl -s -o /dev/null -w "status code: %{http_code}" http://localhost:9100/metrics
+        echo
 EOF
     else
         echo "'sshpass' is not installed on ${entry[0]}"
