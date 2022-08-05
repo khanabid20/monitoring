@@ -1,0 +1,4 @@
+#server,user,password
+HOST1,user1,s0m3s3cur3p@s$
+HOST2,user2,s0m3s3cur3p@s$
+# ...
