@@ -12,37 +12,40 @@
 default: help
 
 ALERTMGR_HOST := $$(hostname -I)
-# DOCKER_COMPOSE_CMD = docker-compose -f docker-compose.yml
+DOCKER_COMPOSE_CMD = docker-compose -f docker-compose.yml
 
-ifdef profile
-	DOCKER_COMPOSE_CMD = docker-compose -f docker-compose.yml --profile=${profile}
-else
-	DOCKER_COMPOSE_CMD = docker-compose -f docker-compose.yml
-endif
+config:				## Create & copy configuration files into /etc/prometheus
+	@echo ...Creating /etc/prometheus folder
+	sudo mkdir -p /etc/prometheus
+	sudo chmod 777 /etc/prometheus
+	@echo
+	@echo ...Copying configuration files
+	sudo cp -r etc/prometheus/* /etc/prometheus/
+	@echo
 
 env:				## Create .env file (currently with ALERMGT_HOST var)
-	@echo $(ALERTMGR_HOST)
+	@echo ...Creating .env file for docker-compose
 	echo ALERTMGR_HOST=${ALERTMGR_HOST} > .env
+	@echo
 
-up: env				## Build, (re)create & start containers
+up: config env		## Build, (re)create & start containers
+	@echo
 	${DOCKER_COMPOSE_CMD} up -d
 
-start: env			## Start the stopped containers
+start:				## Starts previously-built containers
 	${DOCKER_COMPOSE_CMD} start
 
-stop: env			## Stop the running containers
+stop:				## Stops containers (without removing them)
 	${DOCKER_COMPOSE_CMD} stop
 
-restart: env		## Restart the containers
-	${DOCKER_COMPOSE_CMD} stop
-	${DOCKER_COMPOSE_CMD} up -d
+restart: stop start	## Stops containers (via 'stop'), and starts them again (via 'start')
 
 down:				## Stop & delete the running containers
 	@echo Stop and delete all the containers
 	${DOCKER_COMPOSE_CMD} down
 
-destroy:			## Stop & delete the running containers as well as the volumes
-	@echo Stop and delete all the containers and volumes
+destroy:			## Stop & delete the running containers, volumes, networking, etc.
+	@echo Stop and delete all the containers, volumes and networking
 	${DOCKER_COMPOSE_CMD} down -v
 
 logs:				## Tail containers log
@@ -51,9 +54,12 @@ logs:				## Tail containers log
 ps:					## Display running containers
 	${DOCKER_COMPOSE_CMD} ps
 
-backup_logs: ps		## Backs up docker logs
+backup_logs:		## Backs up containers log
 	mkdir -p backup
 	${DOCKER_COMPOSE_CMD} logs --no-color > backup/docker.$$(date +'%Y%m%d_%H%M%S').logs
+
+nodex:				## Deploy node-exporter on Node machine(s)
+	./setup_node_exporter.sh
 
 prom_reload: 		## Reload Prometheus configuration file
 	@echo Reload prometheus configuration...
@@ -72,10 +78,10 @@ simulate: 			## Simulate Alert
 
 help: ## Show help message
 	@echo 'Usage:'
-	@echo '  make <target> [option1=val1 option2=val2 ...]'
+	@echo '  make <target>'		#' [option1=val1 option2=val2 ...]'
 	@awk 'BEGIN {FS = ":.*##"; printf "\nTargets:\033[36m\033[0m\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m-- %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-	@printf  "\nOptions:\n"
-	@printf "  \033[36m%-15s\033[0m-- %s\n" "profile=value" " Profile name of docker-compose service(s)"
+#	@printf  "\nOptions:\n"
+#	@printf "  \033[36m%-15s\033[0m-- %s\n" "profile=value" " Profile name of docker-compose service(s)"
 
 ## Show help message
 # help:
