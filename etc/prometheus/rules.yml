@@ -8,6 +8,7 @@ groups:
        severity: warning
      annotations:
        summary: "Instance {{ $labels.instance }} down"
+      #  description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minutes."
 
  - name: ssh_down
    rules:
@@ -18,6 +19,7 @@ groups:
        severity: warning
      annotations:
        summary: "SSH on instance {{ $labels.instance }} down"
+      #  description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minutes."
 
  - name: http_down
    rules:
@@ -27,4 +29,5 @@ groups:
      labels:
        severity: critical
      annotations:
-       summary: "Instance {{ $labels.instance }} not accessible"
+       summary: "{{ $labels.instance }} not accessible"
+      #  description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."

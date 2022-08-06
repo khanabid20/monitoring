@@ -1,28 +1,16 @@
 version: "3.8"
 
 services:
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    restart: unless-stopped
-    volumes:
-      - /:/host:ro,rslave
-    expose:
-      - 9100
-    networks:
-      - monitoring
-    profiles: ["prometheus"]
-
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     restart: unless-stopped
     volumes:
       - /etc/prometheus/:/etc/prometheus/
-      # - prometheus_data:/prometheus
+      # - prometheus-data:/etc/prometheus/data       # to persist the scraped data even after a restart
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/etc/prometheus/data/'
+      - '--storage.tsdb.path=/etc/prometheus/data'  # storing data into already bind mounted directory /etc/prometheus
       - '--web.enable-lifecycle'
       - '--web.enable-admin-api'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
@@ -31,7 +19,19 @@ services:
       - 9091:9090
     networks:
       - monitoring
-    profiles: ["prometheus"]
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave
+    # expose:
+    #   - 9100
+    ports:
+      - 9100:9100
+    networks:
+      - monitoring
 
   blackbox-exporter:
     image: prom/blackbox-exporter:latest
@@ -45,7 +45,6 @@ services:
       - 9115:9115
     networks:
       - monitoring
-    profiles: ["prometheus"]
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -53,14 +52,16 @@ services:
     restart: unless-stopped
     volumes:
       - /etc/prometheus/:/etc/prometheus/
+      - alertmanager-data:/data
     command:
       - '--config.file=/etc/prometheus/alertmanager.yml'
+      - '--storage.path=/data'
       - "--web.external-url=http://${ALERTMGR_HOST}:9093"
+      # - "--log.level=debug"
     ports:
       - 9093:9093
     networks:
       - monitoring
-    profiles: ["prometheus"]
 
   prometheus-webexteams:
     image: infonova/prometheus-webexteams:master-76d693b
@@ -75,21 +76,29 @@ services:
       - 2000:2000
     networks:
       - monitoring
-    profiles: ["prometheus"]
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
+    volumes:
+      - /etc/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
     ports:
       - 3000:3000
     networks:
       - monitoring
-    profiles: ["grafana"]
+    # profiles: ["grafana"]
 
 networks:
   monitoring:
     driver: bridge
 
-# volumes:
-#   prometheus_data: {}
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:

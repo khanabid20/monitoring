@@ -1,4 +1,4 @@
-.PHONY: prom_reload env up start down destroy stop restart logs ps backup_logs simulate
+.PHONY: default config_prom config_grafana config env up start stop restart down destroy delete_mount logs ps backup_logs nodex reload_prom simulate help
 
 # define _script
 # cat > .env <<'EOF'
@@ -13,17 +13,31 @@ default: help
 
 ALERTMGR_HOST := $$(hostname -I)
 DOCKER_COMPOSE_CMD = docker-compose -f docker-compose.yml
+TAIL := $${t:-10}
+SERVICE := $${s:-}
 
-config:				## Create & copy configuration files into /etc/prometheus
+config_prom: 		# Create & copy configuration files into /etc/prometheus
 	@echo ...Creating /etc/prometheus folder
 	sudo mkdir -p /etc/prometheus
+	@# a workaround go get away with error of permission denied
 	sudo chmod 777 /etc/prometheus
 	@echo
 	@echo ...Copying configuration files
 	sudo cp -r etc/prometheus/* /etc/prometheus/
 	@echo
+config_grafana: 	# Create & copy configuration files into /etc/grafana
+	@echo ...Creating /etc/grafana folder
+	sudo mkdir -p /etc/grafana
+	@# a workaround go get away with error of permission denied
+	@#sudo chmod 777 /etc/grafana
+	@echo
+	@echo ...Copying configuration files
+	sudo cp -r etc/grafana/* /etc/grafana/
+	@echo
 
-env:				## Create .env file (currently with ALERMGT_HOST var)
+config: config_prom config_grafana	## Create & copy configuration files for Prometheus & grafana
+
+env:				## Create .env file (currently with ALERMGT_HOST var) for docker-compose
 	@echo ...Creating .env file for docker-compose
 	echo ALERTMGR_HOST=${ALERTMGR_HOST} > .env
 	@echo
@@ -31,6 +45,9 @@ env:				## Create .env file (currently with ALERMGT_HOST var)
 up: config env		## Build, (re)create & start containers
 	@echo
 	${DOCKER_COMPOSE_CMD} up -d
+	@echo
+	@echo ' Prometheus --> http://localhost:9091'
+	@echo ' Grafana --> http://localhost:3000'
 
 start:				## Starts previously-built containers
 	${DOCKER_COMPOSE_CMD} start
@@ -40,16 +57,23 @@ stop:				## Stops containers (without removing them)
 
 restart: stop start	## Stops containers (via 'stop'), and starts them again (via 'start')
 
-down:				## Stop & delete the running containers
-	@echo Stop and delete all the containers
+down:				## Stop & delete the running containers & networking
+	@echo ...Stopping and deleting all the containers
 	${DOCKER_COMPOSE_CMD} down
 
-destroy:			## Stop & delete the running containers, volumes, networking, etc.
-	@echo Stop and delete all the containers, volumes and networking
+destroy:			## Stop & delete the running containers, networking & volumes
+	@echo ...Stopping and deleting all the containers, volumes and networking
+	@sleep 2
 	${DOCKER_COMPOSE_CMD} down -v
 
+delete_mount:		## Delete /etc/prometheus & /etc/grafana directories
+	@echo ...Deleting mounted directories [/etc/prometheus, /etc/grafana]
+	sudo rm -Ir /etc/prometheus /etc/grafana
+
 logs:				## Tail containers log
-	${DOCKER_COMPOSE_CMD} logs -f --tail=10
+	@echo ...Tailing last ${TAIL} lines of the logs...Press Ctrl+C to exit
+	@sleep 2
+	${DOCKER_COMPOSE_CMD} logs -f --tail=${TAIL} ${SERVICE}
 
 ps:					## Display running containers
 	${DOCKER_COMPOSE_CMD} ps
@@ -61,9 +85,9 @@ backup_logs:		## Backs up containers log
 nodex:				## Deploy node-exporter on Node machine(s)
 	./setup_node_exporter.sh
 
-prom_reload: 		## Reload Prometheus configuration file
-	@echo Reload prometheus configuration...
-	curl -X POST http://localhost:9091/-/reload
+reload_prom: 		## Reload Prometheus configuration file
+	@echo ...Reload prometheus configuration...
+	curl -w "status code: %{http_code}\\n" -X POST http://localhost:9091/-/reload
 
 simulate: 			## Simulate Alert
 	@echo .................
@@ -78,10 +102,11 @@ simulate: 			## Simulate Alert
 
 help: ## Show help message
 	@echo 'Usage:'
-	@echo '  make <target>'		#' [option1=val1 option2=val2 ...]'
+	@echo '  make <target> [option1=val1 option2=val2 ...]'
 	@awk 'BEGIN {FS = ":.*##"; printf "\nTargets:\033[36m\033[0m\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m-- %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-#	@printf  "\nOptions:\n"
-#	@printf "  \033[36m%-15s\033[0m-- %s\n" "profile=value" " Profile name of docker-compose service(s)"
+	@printf  "\nOptions:\n"
+	@printf "  \033[36m%-15s\033[0m-- %s\033[36m%s\033[0m\n" "t=numeric" " No. of lines to tail docker logs. E.g " "\`make logs t=10\`"
+	@printf "  \033[36m%-15s\033[0m-- %s\033[36m%s\033[0m\n" "s=string" " Name of the service to run docker logs against. E.g " "\`make logs s=grafana\`"
 
 ## Show help message
 # help:

@@ -1,0 +1,34 @@
+route:
+  group_by: ['alertname', 'job']
+  receiver: default-receiver
+
+# templates:
+  # - '*.tmpl'
+
+receivers:
+- name: default-receiver
+  webhook_configs: # https://prometheus.io/docs/alerting/configuration/#webhook_config
+  - send_resolved: true
+    url: "http://prometheus-webexteams:2000/high_prio_ch"
+
+
+# EXAMPLE:  MULTIPLE RECEIVERS
+#route:
+#  ...
+#  routes:
+#    - receiver: high_prio_receiver
+#      match:
+#        severity: critical
+#    - receiver: low_prio_receiver
+#      match:
+#        severity: warning
+#
+#receivers:
+#- name: 'high_prio_receiver'
+#  webhook_configs:
+#    - send_resolved: true
+#      url: 'http://<servicename>:2000/high_prio_ch' # request handler 1
+#- name: 'low_prio_receiver'
+#  webhook_configs:
+#    - send_resolved: true
+#      url: 'http://<servicename>:2000/low_prio_ch' # request handler 2

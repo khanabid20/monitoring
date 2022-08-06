@@ -2,7 +2,7 @@
 
 # Date: 2022/08/05
 # Author: Abid Khan
-# Description: This script loops over list of servers provide in a text file and deploy node-exporter container.
+# Description: This script loops over list of servers provide in a text file and deploy node-exporter container on them at a time.
 # Usage: 
 #   $0
 
