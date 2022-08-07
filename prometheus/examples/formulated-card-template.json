@@ -1,0 +1,195 @@
+{
+	"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+	"version": "1.2",
+	"type": "AdaptiveCard",
+	"body": [
+		{
+			"type": "TextBlock",
+			"text": "Firing",
+			"size": "large",
+			"color": "light",
+			"weight": "bolder"
+		},
+		{
+			"type": "ColumnSet",
+			"columns": [
+				{
+					"type": "Column",
+					"width": "1px",
+					"style": "warning",
+					"items": []
+				},
+				{
+					"type": "Column",
+					"width": "stretch",
+					"items": [
+						{
+							"type": "ColumnSet",
+							"columns": [
+								{
+									"type": "Column",
+									"width": "120px",
+									"items": [
+										{
+											"type": "TextBlock",
+											"text": "Alertname:",
+											"weight": "Bolder",
+											"color": "Light"
+										},
+										{
+											"type": "TextBlock",
+											"text": "Namespace:",
+											"color": "Light",
+											"spacing": "Small",
+											"weight": "Bolder"
+										},
+										{
+											"type": "TextBlock",
+											"text": "Job:",
+											"color": "Light",
+											"spacing": "Small",
+											"weight": "Bolder"
+										}
+									]
+								},
+								{
+									"type": "Column",
+									"width": "stretch",
+									"items": [
+										{
+											"type": "TextBlock",
+											"text": "HTTP_DOWN",
+											"color": "Light",
+											"spacing": "Small"
+										},
+										{
+											"type": "TextBlock",
+											"text": "",
+											"color": "Light",
+											"spacing": "Small"
+										},
+										{
+											"type": "TextBlock",
+											"text": "",
+											"color": "Light",
+											"spacing": "Small"
+										}
+									]
+								}
+							]
+						},
+						{
+							"type": "ColumnSet",
+							"columns": [
+								{
+									"type": "Column",
+									"width": "stretch",
+									"items": [
+										{
+											"type": "ColumnSet"
+										},
+										{
+											"type": "TextBlock",
+											"text": "Labels:",
+											"separator": true,
+											"color": "Light",
+											"weight": "Bolder"
+										},
+										{
+											"type": "ColumnSet",
+											"columns": [
+												{
+													"type": "Column",
+													"width": "20px"
+												},
+												{
+													"type": "Column",
+													"width": "stretch",
+													"items": [
+														{
+															"type": "FactSet",
+															"facts": [
+																{
+																	"title": "alertname",
+																	"value": "HTTP_DOWN"
+																},
+																{
+																	"title": "instance",
+																	"value": "xx.xx.xx.xx:8080/gem"
+																},
+																{
+																	"title": "job",
+																	"value": "blackbox:http"
+																},
+																{
+																	"title": "severity",
+																	"value": "page"
+																}
+															]
+														}
+													]
+												}
+											]
+										},
+										{
+											"type": "ColumnSet",
+											"columns": [
+												{
+													"type": "Column",
+													"width": "stretch",
+													"items": [
+														{
+															"type": "TextBlock",
+															"text": "Annotations:",
+															"weight": "Bolder",
+															"color": "Light",
+															"separator": true
+														},
+														{
+															"type": "ColumnSet",
+															"columns": [
+																{
+																	"type": "Column",
+																	"width": "20px"
+																},
+																{
+																	"type": "Column",
+																	"width": "stretch",
+																	"items": [
+																		{
+																			"type": "FactSet",
+																			"facts": [
+																				{
+																					"title": "summary",
+																					"value": "GEM xx.xx.xx.xx:8080/gem down"
+																				}
+																			]
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "ActionSet",
+			"actions": [
+				{
+					"type": "Action.OpenUrl",
+					"title": "Silence",
+					"url": "http://13fa1dd02b26:9093/#/silences/new?filter=%7Balertname%3D%22HTTP_DOWN%22%2C%20instance%3D%22xx.xx.xx.xx:8080/gem%22%2C%20job%3D%22blackbox:http%22%2C%20severity%3D%22page%22%7D"
+				}
+			]
+		}
+	]
+}

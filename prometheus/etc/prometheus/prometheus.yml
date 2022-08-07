@@ -50,7 +50,7 @@ scrape_configs:
       module: [ssh_banner]
     static_configs:
       - targets:
-         #- 'server:22'              # Nodes IP/DNS & ssh port
+         #- '<NODE_HOST>:22'              # Nodes IP/DNS & ssh port
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -65,7 +65,8 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - 'SERVER:PORT/path'             # This tests whether a webapp is accessible or not
+          #- '<HOST>:<PORT>/path'             # This tests whether a webapp is accessible or not
+    relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]

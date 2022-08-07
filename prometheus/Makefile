@@ -1,4 +1,4 @@
-.PHONY: default config_prom config_grafana config env up start stop restart down destroy delete_mount logs ps backup_logs nodex reload_prom simulate help
+.PHONY: default config_prom config_grafana config env up start stop restart down destroy delete_mount logs ps backup_logs nodex reload_prom promtool simulate help
 
 # define _script
 # cat > .env <<'EOF'
@@ -12,9 +12,15 @@
 default: help
 
 ALERTMGR_HOST := $$(hostname -I)
-DOCKER_COMPOSE_CMD = docker-compose -f docker-compose.yml
+DOCKER_COMPOSE_CMD := docker-compose -f docker-compose.yml
 TAIL := $${t:-10}
 SERVICE := $${s:-}
+PROMTOOL_VERSION := 2.37.0
+PROMTOOL_TZG := https://github.com/prometheus/prometheus/releases/download/v${PROMTOOL_VERSION}/prometheus-${PROMTOOL_VERSION}.linux-amd64.tar.gz
+# Color codes
+BLUE := \033[36m
+NC := \033[0m
+BOLD := \033[1m
 
 config_prom: 		# Create & copy configuration files into /etc/prometheus
 	@echo ...Creating /etc/prometheus folder
@@ -44,16 +50,16 @@ env:				## Create .env file (currently with ALERMGT_HOST var) for docker-compose
 
 up: config env		## Build, (re)create & start containers
 	@echo
-	${DOCKER_COMPOSE_CMD} up -d
+	${DOCKER_COMPOSE_CMD} up -d ${SERVICE}
 	@echo
 	@echo ' Prometheus --> http://localhost:9091'
 	@echo ' Grafana --> http://localhost:3000'
 
 start:				## Starts previously-built containers
-	${DOCKER_COMPOSE_CMD} start
+	${DOCKER_COMPOSE_CMD} start ${SERVICE}
 
 stop:				## Stops containers (without removing them)
-	${DOCKER_COMPOSE_CMD} stop
+	${DOCKER_COMPOSE_CMD} stop ${SERVICE}
 
 restart: stop start	## Stops containers (via 'stop'), and starts them again (via 'start')
 
@@ -89,6 +95,17 @@ reload_prom: 		## Reload Prometheus configuration file
 	@echo ...Reload prometheus configuration...
 	curl -w "status code: %{http_code}\\n" -X POST http://localhost:9091/-/reload
 
+.ONESHELL:
+promtool:	## Download and setup promtool binary
+	@if [ -f /usr/local/bin/promtool ]; then \
+		echo "Binary already present (/usr/local/bin/promtool)"; \
+	else \
+		echo ...Downloading promtool and placing it in /usr/local/bin/
+		wget --show-progress --progress=bar:force -N -qO- ${PROMTOOL_TZG} | sudo tar zxf - -C /usr/local/bin/ --strip-components=1 --wildcards '**/promtool'
+		if [ $$? -eq 0 ]; then echo Downloaded successfully.; fi
+	fi
+	@echo "Run \`promtool --version\`"
+
 simulate: 			## Simulate Alert
 	@echo .................
 	@echo . Send \"down\" alert
@@ -103,10 +120,10 @@ simulate: 			## Simulate Alert
 help: ## Show help message
 	@echo 'Usage:'
 	@echo '  make <target> [option1=val1 option2=val2 ...]'
-	@awk 'BEGIN {FS = ":.*##"; printf "\nTargets:\033[36m\033[0m\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m-- %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nTargets:\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  ${BLUE}%-15s${NC}-- %s\n", $$1, $$2 } /^##@/ { printf "\n${BOLD}%s${NC}\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 	@printf  "\nOptions:\n"
-	@printf "  \033[36m%-15s\033[0m-- %s\033[36m%s\033[0m\n" "t=numeric" " No. of lines to tail docker logs. E.g " "\`make logs t=10\`"
-	@printf "  \033[36m%-15s\033[0m-- %s\033[36m%s\033[0m\n" "s=string" " Name of the service to run docker logs against. E.g " "\`make logs s=grafana\`"
+	@printf "  ${BLUE}%-15s${NC}-- %s${BLUE}%s${NC}\n" "t=numeric" " No. of lines to tail docker logs. E.g " "\`make logs t=10\`"
+	@printf "  ${BLUE}%-15s${NC}-- %s${BLUE}%s${NC}\n" "s=string" " Name of the service to run docker logs against. E.g " "\`make logs s=grafana\`"
 
 ## Show help message
 # help:

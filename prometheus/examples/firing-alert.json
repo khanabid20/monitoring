@@ -1,0 +1,37 @@
+{
+	"receiver": "olympia",
+	"status": "firing",
+	"alerts": [
+		{
+			"status": "firing",
+			"labels": {
+				"alertname": "HTTP_DOWN",
+				"instance": "x.x.x.x:8080/gem",
+				"job": "blackbox:http",
+				"severity": "page"
+			},
+			"annotations": {
+				"summary": "GEM x.x.x.x:8080/gem down"
+			},
+			"startsAt": "2022-08-02T11:27:16.376Z",
+			"endsAt": "0001-01-01T00:00:00Z",
+			"generatorURL": "http://8c62ca1b9908:9090/graph?g0.expr=up%7Bjob%3D%22blackbox%3Ahttp%22%7D+%3D%3D+0+or+probe_success%7Bjob%3D%22blackbox%3Ahttp%22%7D+%3D%3D+0&g0.tab=1",
+			"fingerprint": "7528cdf0652ac8d0"
+		}
+	],
+	"groupLabels": {
+		"alertname": "HTTP_DOWN"
+	},
+	"commonLabels": {
+		"alertname": "HTTP_DOWN",
+		"instance": "x.x.x.x:8080/gem",
+		"job": "blackbox:http",
+		"severity": "page"
+	},
+	"commonAnnotations": {
+		"summary": "GEM x.x.x.x:8080/gem down"
+	},
+	"externalURL": "http://192.168.1.10:9093",
+	"version": "4",
+	"groupKey": "{}:{alertname=\"HTTP_DOWN\"}"
+}
