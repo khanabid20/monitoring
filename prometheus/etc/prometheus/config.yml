@@ -1,0 +1,14 @@
+connectors:
+  - request_path: high_prio_ch
+    access_token: <BOT_ACCESS_TOKEN>
+    room_id: <WEBEX_TEAM_ROOM_ID>
+    template_file: /config/resources/default-message-card.tmpl
+    webhook_url: https://webexapis.com/v1/messages
+    escape_underscores: false
+
+  # - request_path: low_prio_ch
+    # access_token: <BOT_ACCESS_TOKEN>
+    # room_id: <WEBEX_TEAM_ROOM_ID for low priority alerts>
+    # template_file: /config/resources/default-message-card.tmpl
+    # webhook_url: https://webexapis.com/v1/messages
+    # escape_underscores: false

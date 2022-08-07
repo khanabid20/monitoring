@@ -1,0 +1,74 @@
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+rule_files:
+  - rules.yml
+
+alerting:
+  alertmanagers:
+  - static_configs:
+      - targets:
+        - 'alertmanager:9093'
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: node
+    static_configs:
+      - targets:
+          - 'node-exporter:9100'    # node-exporter on prometheus server
+          #- 'x.x.x.x:9100'          # node-exporter on node server
+
+  # - job_name: 'raspberries'
+  #   static_configs:
+  #     - targets:
+  #       - 'x.x.x.x:9100'
+
+  - job_name: 'blackbox:icmp'
+    metrics_path: /probe
+    params:
+      module: [icmp_ipv4]
+    static_configs:
+      - targets:
+          #- x.x.x.x                 # This can be some IP address or a DNS name for e.g. github.com or some internal server 10.0.1.20
+          #- some.dns.name
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115     # The blackbox exporter’s real hostname:port
+
+  - job_name: 'blackbox:ssh'
+    metrics_path: /probe
+    params:
+      module: [ssh_banner]
+    static_configs:
+      - targets:
+         #- 'server:22'              # Nodes IP/DNS & ssh port
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115     # The blackbox exporter’s real hostname:port
+
+  - job_name: 'blackbox:http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - 'SERVER:PORT/path'             # This tests whether a webapp is accessible or not
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115     # The blackbox exporter’s real hostname:port
