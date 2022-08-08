@@ -1,0 +1,83 @@
+#Download the source code
+
+cd /tmp
+wget https://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.5.2/nagiosgraph-1.5.2.tar.gz
+
+#Unzip the file
+
+tar xvf nagiosgraph-1.5.2.tar.gz
+cd nagiosgraph-1.5.2
+
+#Install the prereqs
+sudo apt-get install -y libcgi-pm-perl librrds-perl libgd-gd2-perl
+
+#Run the installation script and accept all the defaults
+sudo ./install.pl
+
+#Change the owner of the nagiosgraph directory
+sudo chown -R nagios:nagios /usr/local/nagiosgraph
+
+#Post installation config
+#In the nagios configuration file (/usr/local/nagios/etc/nagios.cfg),
+#Find the line
+
+process_performance_data=0
+
+
+#Delete it and add these lines:
+
+# process nagios performance data using nagiosgraph
+process_performance_data=1
+service_perfdata_file=/tmp/perfdata.log
+service_perfdata_file_template=$LASTSERVICECHECK$||$HOSTNAME$||$SERVICEDESC$||$SERVICEOUTPUT$||$SERVICEPERFDATA$
+service_perfdata_file_mode=a
+service_perfdata_file_processing_interval=30
+service_perfdata_file_processing_command=process-service-perfdata-for-nagiosgraph
+
+#In the nagios commands file (/usr/local/nagios/etc/objects/command.cfg), add these lines:
+
+# command to process nagios performance data for nagiosgraph
+define command {
+  command_name process-service-perfdata-for-nagiosgraph
+  command_line /usr/local/nagiosgraph/bin/insert.pl
+}
+
+
+# Edit (/usr/local/nagiosgraph/etc/nagiosgraph-apache.conf)
+
+#In both directory blocks replace the lines:
+  Order allow,deny
+  Allow from all
+
+#With this line:
+  Require all granted
+
+#In the apache configuration file (/etc/apache2/httpd.conf),add this line:
+
+include /usr/local/nagiosgraph/etc/nagiosgraph-apache.conf
+
+# Check the nagios configuration:
+
+/usr/local/nagios/bin/nagios -v /usr/local/nagio/etc/nagios.cfg
+
+# Restart nagios to start data collection:
+
+/etc/init.d/nagios restart
+
+# Restart apache to enable display of graphs:
+
+/etc/init.d/apache2 restart
+
+# Add action_url to services
+
+vim /usr/local/nagios/etc/objects/templates.cfg
+
+#Search for "generic-service" and add this parameter
+
+action_url /nagiosgraph/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$
+
+#Now search for "generic-host" and add this
+action_url /nagiosgraph/cgi-bin/showhost.cgi?host=$HOSTNAME$
+
+#Save and quit the file and restart nagios
+sudo systemctl restart nagios

@@ -1,0 +1,67 @@
+#Install Nagios Core
+ 
+#Install prereqs
+sudo apt-get update
+sudo apt-get install -y autoconf gcc libc6 make wget unzip apache2 php libapache2-mod-php7.0 libgd2-xpm-dev
+ 
+#Download source
+cd /tmp
+wget -O nagioscore.tar.gz https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.3.4.tar.gz
+tar xzf nagioscore.tar.gz
+ 
+#Compile
+cd /tmp/nagioscore-nagios-4.3.4/
+sudo ./configure --with-httpd-conf=/etc/apache2/sites-enabled
+sudo make all
+ 
+#Create user and group
+sudo useradd nagios
+sudo usermod -a -G nagios www-data
+ 
+#Install binaries
+sudo make install
+ 
+ 
+#Install Service
+sudo make install-init
+sudo update-rc.d nagios defaults
+ 
+ 
+#Install commandmode
+sudo make install-commandmode
+ 
+ 
+#Install sample config
+sudo make install-config
+ 
+#Install apache config
+sudo make install-webconf
+sudo a2enmod rewrite
+sudo a2enmod cgi
+ 
+#Configure Firewall
+sudo ufw allow Apache
+sudo ufw reload
+ 
+#Setup nagiosadmin user account
+sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+ 
+ 
+##Install Nagios Plugins
+ 
+#install prereqs
+sudo apt-get install -y autoconf gcc libc6 libmcrypt-dev make libssl-dev wget bc gawk dc build-essential snmp libnet-snmp-perl gettext
+ 
+#Download source
+cd /tmp
+wget --no-check-certificate -O nagios-plugins.tar.gz https://github.com/nagios-plugins/nagios-plugins/archive/release-2.2.1.tar.gz
+tar zxf nagios-plugins.tar.gz
+
+#Compile and install
+cd /tmp/nagios-plugins-release-2.2.1/
+sudo ./tools/setup
+sudo ./configure
+sudo make
+sudo make install
+ 
+
