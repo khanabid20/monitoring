@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # Below timeout had to be set to avoid vagrant getting stuck at "SSH auth method: private key"
+  config.vm.boot_timeout = 600
+  
+#  config.vm.provider :virtualbox do |vb|
+#    vb.customize ["modifyvm", :id, "--uart1", "0x3F8", "4"]
+#    vb.customize ["modifyvm", :id, "--uartmode1", "file", File::NULL]
+#    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+#  end
+
+  config.vm.define "nagios" do |nagios|
+    nagios.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+    nagios.vm.network "private_network", ip: "192.168.50.10"
+    nagios.vm.synced_folder "nagios/", "/usr/local/nagios/etc"
+    nagios.vm.synced_folder "nagiosgraph/", "/usr/local/nagiosgraph/etc"
+    nagios.vm.box = "bento/ubuntu-16.04"
+  end
+  config.vm.define "web" do |web|
+    web.vm.network "forwarded_port", guest: 80, host: 9090, host_ip: "127.0.0.1"
+    web.vm.network "private_network", ip: "192.168.50.20"
+    web.vm.box = "bento/ubuntu-16.04"
+    web.vm.provision "shell", "inline": "sudo apt-get update"
+    web.vm.provision "shell", "inline": "sudo apt-get install -y nginx"
+    web.vm.provision "shell", "inline": "sudo systemctl enable nginx"
+  end
+  config.vm.define "db" do |db|
+    db.vm.box = "bento/ubuntu-16.04"
+    db.vm.network "private_network", ip: "192.168.50.30"
+    db.vm.provision "shell", "inline": "sudo apt-get update"
+    db.vm.provision "shell", "inline": "sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password pass'"
+    db.vm.provision "shell", "inline": "sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password pass'"
+    db.vm.provision "shell", "inline": "sudo apt-get install -y mysql-server"
+    db.vm.provision "shell", "inline": "sudo systemctl enable mysql"
+  end
+end
